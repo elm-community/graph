@@ -1,8 +1,11 @@
 module Graph.TGF exposing (output)
 
-{-| This module provides a means of converting the `Graph` data type into a valid [TGF](https://en.wikipedia.org/wiki/Trivial_Graph_Format) string for visualizing your graph structure.
+{-| This module provides a means of converting the `Graph` data type into a
+valid [TGF](https://en.wikipedia.org/wiki/Trivial_Graph_Format) string for
+visualizing your graph structure.
 
-You can preview your graph by inserting the generated string into [yEd](http://www.yworks.com/products/yed) or other compatible software.
+You can preview your graph by inserting the generated string into
+[yEd](http://www.yworks.com/products/yed) or other compatible software.
 
 
 # Conversion
