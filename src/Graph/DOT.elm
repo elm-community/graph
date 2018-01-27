@@ -36,16 +36,27 @@ import Graph exposing (Edge, Graph, Node, edges, get, nodes)
 
 
 {-| Converts a `Graph` into a valid DOT string.
-Note that you must supply conversion functions for node labels and edge labels to strings.
+Note that you must supply conversion functions for node labels and edge labels
+to `Maybe String`s.
+
+When a conversion function returns `Nothing`, no _label_ attribute is output.
+For nodes, GraphViz falls back to displaying node ids.
+For edges, no label is displayed.
+
 -}
 output : (n -> Maybe String) -> (e -> Maybe String) -> Graph n e -> String
 output =
     outputWithStyles defaultStyles
 
 
-{-| A type representing the attrs to apply at the graph, node, and edge entities (subgraphs and cluster subgraphs are not supported).
+{-| A type representing the attrs to apply at the graph, node, and edge
+entities (subgraphs and cluster subgraphs are not supported).
 
-Note that `Styles` is made up of strings, which loses type safety, but allows you to use any GraphViz attrs without having to model them out in entirety in this module. It is up to you to make sure you provide valid attr strings. See <http://www.graphviz.org/content/attrs> for available options.
+Note that `Styles` is made up of strings, which loses type safety, but
+allows you to use any GraphViz attrs without having to model them out in
+entirety in this module. It is up to you to make sure you provide valid
+attr strings. See <http://www.graphviz.org/content/attrs> for available
+options.
 
 -}
 type alias Styles =
@@ -114,7 +125,7 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
         attrAssocs : Dict String String -> String
         attrAssocs =
             Dict.toList
-                >> List.map (\( k, v ) -> k ++ "=\"" ++ v ++ "\"")
+                >> List.map (\( k, v ) -> k ++ "=" ++ Basics.toString v)
                 >> String.join ", "
 
         makeAttrs : Dict String String -> String
@@ -163,10 +174,15 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
                 ++ Basics.toString n.id
                 ++ makeAttrs (nodeAttrs n.label)
     in
-    "digraph G {\n"
-        ++ ("  rankdir=" ++ toString styles.rankdir ++ ";\n")
-        ++ ("  graph [" ++ styles.graph ++ "]" ++ ";\n")
-        ++ ("  node [" ++ styles.node ++ "]" ++ ";\n")
-        ++ ("  edge [" ++ styles.edge ++ "]" ++ ";\n\n")
-        ++ (edgesString ++ ";\n\n")
-        ++ (nodesString ++ ";\n}")
+    String.join "\n"
+        [ "digraph G {"
+        , "  rankdir=" ++ toString styles.rankdir ++ ";"
+        , "  graph [" ++ styles.graph ++ "];"
+        , "  node [" ++ styles.node ++ "];"
+        , "  edge [" ++ styles.edge ++ "];"
+        , ""
+        , edgesString ++ ";"
+        , ""
+        , nodesString ++ ";"
+        , "}"
+        ]
