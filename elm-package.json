@@ -1,5 +1,5 @@
 {
-    "version": "4.1.0",
+    "version": "5.0.0",
     "summary": "Handling graphs the functional way.",
     "repository": "https://github.com/elm-community/graph.git",
     "license": "BSD3",
@@ -9,7 +9,7 @@
     "exposed-modules": [
         "Graph",
         "Graph.Tree",
-        "Graph.GraphViz",
+        "Graph.DOT",
         "Graph.TGF"
     ],
     "dependencies": {
