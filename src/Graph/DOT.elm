@@ -16,7 +16,7 @@ You can easily preview your graph by inserting the generated string into an
 online GraphViz tool like <https://dreampuf.github.io/GraphvizOnline/>.
 
 You can also dynamically draw your graph in your application by sending the
-string over a port to the javascript version of the GraphViz library, 
+string over a port to the javascript version of the GraphViz library,
 <https://github.com/mdaines/viz.js/> (see the examples there fore more
 specifics on how to embed the generated visualization).
 
@@ -78,7 +78,7 @@ defaultStyles =
     Styles TB "" "" ""
 
 
-{-| Same as `output`, but allows you to add attrs to the graph. 
+{-| Same as `output`, but allows you to add attrs to the graph.
 These attrs will be applied to the entire graph.
 -}
 outputWithStyles : Styles -> (n -> Maybe String) -> (e -> Maybe String) -> Graph n e -> String
@@ -86,10 +86,13 @@ outputWithStyles styles mapNode mapEdge graph =
     let
         labelOnly maybeLabel =
             case maybeLabel of
-                Nothing -> Dict.empty
-                Just l -> Dict.singleton "label" l
+                Nothing ->
+                    Dict.empty
+
+                Just l ->
+                    Dict.singleton "label" l
     in
-        outputWithStylesAndAttributes styles (labelOnly << mapNode) (labelOnly << mapEdge) graph
+    outputWithStylesAndAttributes styles (labelOnly << mapNode) (labelOnly << mapEdge) graph
 
 
 {-| Same as `outputWithStyles`, but allows each node and edge to include its
@@ -98,26 +101,28 @@ labels that return a `Dict String String` of the attribute mappings.
 
 Note that you have to take care of setting the appropriate node and edge labels
 yourself.
+
 -}
-outputWithStylesAndAttributes
-    : Styles 
+outputWithStylesAndAttributes :
+    Styles
     -> (n -> Dict String String)
     -> (e -> Dict String String)
-    -> Graph n e 
+    -> Graph n e
     -> String
 outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
     let
         attrAssocs : Dict String String -> String
         attrAssocs =
             Dict.toList
-            >> List.map (\(k, v) -> k ++ "=\"" ++ v ++ "\"")
-            >> String.join ", "
+                >> List.map (\( k, v ) -> k ++ "=\"" ++ v ++ "\"")
+                >> String.join ", "
 
         makeAttrs : Dict String String -> String
-        makeAttrs d = 
-            if Dict.isEmpty d
-                then ""
-                else " [" ++ attrAssocs d ++ "]"
+        makeAttrs d =
+            if Dict.isEmpty d then
+                ""
+            else
+                " [" ++ attrAssocs d ++ "]"
 
         edges =
             let
@@ -154,7 +159,7 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
                 |> String.join ";\n"
 
         node n =
-            "  " 
+            "  "
                 ++ Basics.toString n.id
                 ++ makeAttrs (nodeAttrs n.label)
     in

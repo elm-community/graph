@@ -161,7 +161,7 @@ all =
 
                     edges =
                         [ e 0 1 Nothing
-                        , e 1 2 Nothing 
+                        , e 1 2 Nothing
                         , e 1 3 (Just 5)
                         ]
 
@@ -175,13 +175,19 @@ all =
 
                     nodeAttrs n =
                         case n.style of
-                            Nothing -> Dict.singleton "label" n.text
-                            Just st -> Dict.fromList [("label", n.text), ("style", st)]
+                            Nothing ->
+                                Dict.singleton "label" n.text
+
+                            Just st ->
+                                Dict.fromList [ ( "label", n.text ), ( "style", st ) ]
 
                     edgeAttrs e =
                         case e.penwidth of
-                            Nothing -> Dict.empty
-                            Just pw -> Dict.singleton "penwidth" (Basics.toString pw)
+                            Nothing ->
+                                Dict.empty
+
+                            Just pw ->
+                                Dict.singleton "penwidth" (Basics.toString pw)
 
                     expected =
                         """digraph G {
