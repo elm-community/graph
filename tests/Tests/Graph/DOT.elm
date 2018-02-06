@@ -34,19 +34,19 @@ all =
 
                     expected =
                         """digraph G {
-  rankdir=TB;
-  graph [];
-  node [];
-  edge [];
+  rankdir=TB
+  graph []
+  node []
+  edge []
 
-  0 -> 1;
-  1 -> 2;
-  1 -> 3;
+  0 -> 1
+  1 -> 2
+  1 -> 3
 
-  0 [label="Welcome"];
-  1 [label="To"];
-  2 [label="Web"];
-  3 [label="\\"GraphViz\\"!"];
+  0 [label="Welcome"]
+  1 [label="To"]
+  2 [label="Web"]
+  3 [label="\\"GraphViz\\"!"]
 }"""
 
                     actual =
@@ -76,19 +76,19 @@ all =
 
                     expected =
                         """digraph G {
-  rankdir=TB;
-  graph [];
-  node [];
-  edge [];
+  rankdir=TB
+  graph []
+  node []
+  edge []
 
-  0 -> 1;
-  1 -> 2 [label="wait for it"];
-  1 -> 3 [label="ok"];
+  0 -> 1
+  1 -> 2 [label="wait for it"]
+  1 -> 3 [label="ok"]
 
-  0 [label="Welcome"];
-  1 [label="To"];
-  2 [label="Web"];
-  3 [label="GraphViz!"];
+  0 [label="Welcome"]
+  1 [label="To"]
+  2 [label="Web"]
+  3 [label="GraphViz!"]
 }"""
 
                     actual =
@@ -118,19 +118,19 @@ all =
 
                     expected =
                         """digraph G {
-  rankdir=LR;
-  graph [bgcolor=red];
-  node [shape=box, color=blue, style="rounded, filled"];
-  edge [];
+  rankdir=LR
+  graph [bgcolor=red]
+  node [shape=box, color=blue, style="rounded, filled"]
+  edge []
 
-  0 -> 1;
-  1 -> 2;
-  1 -> 3;
+  0 -> 1
+  1 -> 2
+  1 -> 3
 
-  0 [label="Welcome"];
-  1 [label="To"];
-  2 [label="Web"];
-  3 [label="GraphViz!"];
+  0 [label="Welcome"]
+  1 [label="To"]
+  2 [label="Web"]
+  3 [label="GraphViz!"]
 }"""
 
                     myStyles =
@@ -191,23 +191,74 @@ all =
 
                     expected =
                         """digraph G {
-  rankdir=TB;
-  graph [];
-  node [style=rounded];
-  edge [];
+  rankdir=TB
+  graph []
+  node [style=rounded]
+  edge []
 
-  0 -> 1;
-  1 -> 2;
-  1 -> 3 [penwidth="5"];
+  0 -> 1
+  1 -> 2
+  1 -> 3 [penwidth="5"]
 
-  0 [label="Welcome"];
-  1 [label="To"];
-  2 [label="Web"];
-  3 [label="GraphViz!", style="bold,filled"];
+  0 [label="Welcome"]
+  1 [label="To"]
+  2 [label="Web"]
+  3 [label="GraphViz!", style="bold,filled"]
 }"""
 
                     actual =
                         outputWithStylesAndAttributes myStyles nodeAttrs edgeAttrs g
+                in
+                \() -> Expect.equal expected actual
+            , test "empty graph" <|
+                let
+                    g =
+                        Graph.empty
+
+                    expected =
+                        """digraph G {
+  rankdir=TB
+  graph []
+  node []
+  edge []
+
+
+
+
+}"""
+
+                    actual =
+                        output Just (always Nothing) g
+                in
+                \() -> Expect.equal expected actual
+            , test "graph with nodes but no edges" <|
+                let
+                    nodes =
+                        [ Node 0 "Hello"
+                        , Node 1 "Bye"
+                        ]
+
+                    edges =
+                        []
+
+                    g =
+                        Graph.fromNodesAndEdges nodes edges
+
+                    expected =
+                        """digraph G {
+  rankdir=TB
+  graph []
+  node []
+  edge []
+
+
+
+  0 [label="Hello"]
+  1 [label="Bye"]
+}"""
+
+                    actual =
+                        output Just (always Nothing) g
                 in
                 \() -> Expect.equal expected actual
             ]
