@@ -156,7 +156,7 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
 
         edgesString =
             List.map edge edges
-                |> String.join ";\n"
+                |> String.join "\n"
 
         edge e =
             "  "
@@ -167,7 +167,7 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
 
         nodesString =
             List.map node nodes
-                |> String.join ";\n"
+                |> String.join "\n"
 
         node n =
             "  "
@@ -176,13 +176,13 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
     in
     String.join "\n"
         [ "digraph G {"
-        , "  rankdir=" ++ toString styles.rankdir ++ ";"
-        , "  graph [" ++ styles.graph ++ "];"
-        , "  node [" ++ styles.node ++ "];"
-        , "  edge [" ++ styles.edge ++ "];"
+        , "  rankdir=" ++ toString styles.rankdir
+        , "  graph [" ++ styles.graph ++ "]"
+        , "  node [" ++ styles.node ++ "]"
+        , "  edge [" ++ styles.edge ++ "]"
         , ""
-        , edgesString ++ ";"
+        , edgesString
         , ""
-        , nodesString ++ ";"
+        , nodesString
         , "}"
         ]
