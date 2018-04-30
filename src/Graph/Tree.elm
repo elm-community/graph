@@ -1,16 +1,15 @@
 module Graph.Tree
     exposing
         ( Forest
-          -- BUILDING
         , Tree
         , empty
         , height
-          -- TRAVERSAL
         , inner
         , isEmpty
         , leaf
         , levelOrder
         , levelOrderList
+        , map
         , postOrder
         , postOrderList
         , preOrder
@@ -18,7 +17,6 @@ module Graph.Tree
         , root
         , size
         , unfoldForest
-          -- QUERY
         , unfoldTree
         )
 
@@ -34,6 +32,11 @@ There are primitives for building and traversing such a tree.
 # Building
 
 @docs empty, leaf, inner, unfoldTree, unfoldForest
+
+
+# Transforming
+
+@docs map
 
 
 # Query
@@ -146,6 +149,24 @@ for each `seed` in `seeds`. A simple specification would be
 unfoldForest : (seed -> ( label, List seed )) -> List seed -> Forest label
 unfoldForest next seeds =
     List.map (unfoldTree next) seeds
+
+
+
+{- TRANSFORMING -}
+
+
+{-| `map f tree` applies supplied function f to every label in a tree, without changing the structure of the tree
+
+    map (\x -> x + 1) empty == empty
+    map (\x -> x * 10) (inner 1 [leaf 2, leaf 3]) == (inner 10 [leaf 20, leaf 30])
+
+-}
+map : (a -> b) -> Tree a -> Tree b
+map f (MkTree totalSize maybeLabelAndChildren) =
+    MkTree totalSize <|
+        Maybe.map
+            (\( label, children ) -> ( f label, List.map (map f) children ))
+            maybeLabelAndChildren
 
 
 
