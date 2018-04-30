@@ -72,6 +72,20 @@ all =
                         Expect.equal (Tree.height Tree.empty) 0
                 ]
 
+        mapTests =
+            let
+                sample =
+                    Tree.inner 1 [ Tree.leaf 2, Tree.leaf 3, Tree.leaf 4, Tree.empty ]
+
+                samplePlusOne =
+                    Tree.inner 10 [ Tree.leaf 20, Tree.leaf 30, Tree.leaf 40, Tree.empty ]
+            in
+            describe "map"
+                [ test "does not change empty" <| \() -> Expect.true "empty remains empty" <| Tree.isEmpty <| Tree.map identity Tree.empty
+                , test "does not change structure of a tree" <| \() -> Expect.equal sample <| Tree.map identity sample
+                , test "applies function to all nodes" <| \() -> Expect.equal samplePlusOne <| Tree.map (\x -> x * 10) sample
+                ]
+
         traversedTree =
             Tree.inner 0
                 [ Tree.inner 1
@@ -104,6 +118,7 @@ all =
                 [ buildingTests
                 , queryTests
                 , traversalTests
+                , mapTests
                 ]
     in
     describe "The Graph.Tree module"
