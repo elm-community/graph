@@ -17,7 +17,7 @@ all =
                         [ Node 0 "Welcome"
                         , Node 1 "To"
                         , Node 2 "Web"
-                        , Node 3 "\"GraphViz\"!"
+                        , Node 3 "\\\"GraphViz\\\"!"
                         ]
 
                     e from to =
@@ -46,7 +46,7 @@ all =
   0 [label="Welcome"]
   1 [label="To"]
   2 [label="Web"]
-  3 [label=""GraphViz"!"]
+  3 [label="\\"GraphViz\\"!"]
 }"""
 
                     actual =

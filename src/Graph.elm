@@ -215,15 +215,7 @@ computeEdgeDiff old new =
                             else
                                 Just (Insert newLbl)
 
-                        ( Just (Remove _), Remove _ ) ->
-                            -- Debug.crash "Graph.computeEdgeDiff: Collected two removals for the same edge. This is an error in the implementation of Graph and you should file a bug report!"
-                            Nothing
-
-                        ( Just (Insert _), _ ) ->
-                            -- Debug.crash "Graph.computeEdgeDiff: Collected inserts before removals. This is an error in the implementation of Graph and you should file a bug report!"
-                            Nothing
-
-                        ( Nothing, eu ) ->
+                        ( _, eu ) ->
                             Just eu
             in
             IntDict.update updatedId replaceUpdate
@@ -652,31 +644,33 @@ mapContexts f =
     fold (\ctx -> insert (f ctx)) empty
 
 
-{-| Maps over node labels. Leaves the graph topology intact.
+{-| Maps over node labels, possibly changing their types. Leaves the graph
+topology intact.
 -}
-mapNodes : (n -> n) -> Graph n e -> Graph n e
+mapNodes : (n1 -> n2) -> Graph n1 e -> Graph n2 e
 mapNodes f =
     fold
-        (\ctx ->
+        (\{ node, incoming, outgoing } ->
             insert
-                { ctx
-                    | node = { id = ctx.node.id, label = f ctx.node.label }
+                { incoming = incoming
+                , outgoing = outgoing
+                , node = { id = node.id, label = f node.label }
                 }
         )
         empty
 
 
-{-| Maps over edge labels Leaves the graph
+{-| Maps over edge labels, possibly chaing their types. Leaves the graph
 topology intact.
 -}
-mapEdges : (e -> e) -> Graph n e -> Graph n e
+mapEdges : (e1 -> e2) -> Graph n e1 -> Graph n e2
 mapEdges f =
     fold
-        (\ctx ->
+        (\{ node, incoming, outgoing } ->
             insert
-                { ctx
-                    | outgoing = IntDict.map (\n e -> f e) ctx.outgoing
-                    , incoming = IntDict.map (\n e -> f e) ctx.incoming
+                { node = node
+                , outgoing = IntDict.map (\n e -> f e) outgoing
+                , incoming = IntDict.map (\n e -> f e) incoming
                 }
         )
         empty
@@ -697,7 +691,7 @@ type AcyclicGraph n e
     = AcyclicGraph (Graph n e) (List NodeId)
 
 
-checkForBackEdges : List NodeId -> Graph n e -> Result () (AcyclicGraph n e)
+checkForBackEdges : List NodeId -> Graph n e -> Result (Edge e) (AcyclicGraph n e)
 checkForBackEdges ordering graph =
     let
         check id ( backSet, _ ) =
@@ -709,7 +703,7 @@ checkForBackEdges ordering graph =
                     get id graph
                         |> Maybe.andThen
                             (.outgoing
-                                >> IntDict.intersect backSetWithId
+                                >> (\e -> IntDict.intersect e backSetWithId)
                                 >> IntDict.findMin
                             )
             in
@@ -718,7 +712,7 @@ checkForBackEdges ordering graph =
                     Ok ( backSetWithId, () )
 
                 Just ( to, label ) ->
-                    Err ()
+                    Err (Edge id to label)
 
         success _ =
             AcyclicGraph graph ordering
@@ -732,11 +726,13 @@ checkForBackEdges ordering graph =
 
 {-| `checkAcyclic graph` checks `graph` for cycles.
 
+If there are any cycles, this will return `Err edge`,
+where `edge` is an `Edge` that is part of a cycle.
 If there aren't any cycles, this will return `Ok acyclic`, where
 `acyclic` is an `AcyclicGraph` that witnesses this fact.
 
 -}
-checkAcyclic : Graph n e -> Result () (AcyclicGraph n e)
+checkAcyclic : Graph n e -> Result (Edge e) (AcyclicGraph n e)
 checkAcyclic graph =
     let
         reversePostOrder =
