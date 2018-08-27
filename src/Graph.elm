@@ -215,7 +215,13 @@ computeEdgeDiff old new =
                             else
                                 Just (Insert newLbl)
 
-                        ( _, eu ) ->
+                        ( Just (Remove _), Remove _ ) ->
+                            crashHack "Graph.computeEdgeDiff: Collected two removals for the same edge. This is an error in the implementation of Graph and you should file a bug report!"
+
+                        ( Just (Insert _), _ ) ->
+                            crashHack "Graph.computeEdgeDiff: Collected inserts before removals. This is an error in the implementation of Graph and you should file a bug report!"
+
+                        ( Nothing, eu ) ->
                             Just eu
             in
             IntDict.update updatedId replaceUpdate
@@ -691,6 +697,31 @@ type AcyclicGraph n e
     = AcyclicGraph (Graph n e) (List NodeId)
 
 
+
+{- This is a **really** ugly hack since Elm 0.19 doesn't allow `Debug.crash` any more.
+   Hopefully this will never get executed, but if it does, it will make your browser
+   hang (or hopefully give a stack overflow error).
+
+   The only justification for this is that it *should* never get called, and there are
+   no sensible default cases if we do get there.
+-}
+
+
+crashHack : String -> a
+crashHack msg =
+    crashHack msg
+
+
+unsafeGet : String -> NodeId -> Graph n e -> NodeContext n e
+unsafeGet msg id graph =
+    case get id graph of
+        Nothing ->
+            crashHack msg
+
+        Just ctx ->
+            ctx
+
+
 checkForBackEdges : List NodeId -> Graph n e -> Result (Edge e) (AcyclicGraph n e)
 checkForBackEdges ordering graph =
     let
@@ -699,15 +730,16 @@ checkForBackEdges ordering graph =
                 backSetWithId =
                     IntDict.insert id () backSet
 
-                backEdge =
-                    get id graph
-                        |> Maybe.andThen
-                            (.outgoing
-                                >> (\e -> IntDict.intersect e backSetWithId)
-                                >> IntDict.findMin
-                            )
+                error =
+                    "Graph.checkForBackEdges: `ordering` didn't contain `id`"
+
+                ctx =
+                    unsafeGet error id graph
+
+                backEdges =
+                    IntDict.intersect ctx.outgoing backSetWithId
             in
-            case backEdge of
+            case IntDict.findMin backEdges of
                 Nothing ->
                     Ok ( backSetWithId, () )
 
@@ -975,9 +1007,8 @@ dfsTree seed graph =
         [ tree ] ->
             tree
 
-        tree :: _ ->
-            -- Debug.crash "dfsTree: There can't be more than one DFS tree. This invariant is violated, please report this bug."
-            tree
+        _ ->
+            crashHack "dfsTree: There can't be more than one DFS tree. This invariant is violated, please report this bug."
 
 
 {-| `dfsForest seeds graph` computes a depth-first spanning `Forest` of the
@@ -1035,8 +1066,7 @@ ignorePath : SimpleNodeVisitor n e acc -> BfsNodeVisitor n e acc
 ignorePath visit path _ acc =
     case path of
         [] ->
-            -- Debug.crash "Graph.ignorePath: No algorithm should ever pass an empty path into this BfsNodeVisitor."
-            acc
+            crashHack "Graph.ignorePath: No algorithm should ever pass an empty path into this BfsNodeVisitor."
 
         ctx :: _ ->
             visit ctx acc
@@ -1176,8 +1206,7 @@ heightLevels (AcyclicGraph startingGraph _) =
                             ( ctx :: nextLevel, indegreesDec )
 
                         Nothing ->
-                            -- Debug.crash "Graph.heightLevels: Could not get a node of a graph which should be there by invariants. Please file a bug report!"
-                            ( nextLevel, indegreesDec )
+                            crashHack "Graph.heightLevels: Could not get a node of a graph which should be there by invariants. Please file a bug report!"
 
                 _ ->
                     ( nextLevel, indegreesDec )
@@ -1200,8 +1229,7 @@ heightLevels (AcyclicGraph startingGraph _) =
                     in
                     case go currentLevel1 nextLevel1 indegrees1 (remove source.node.id graph) of
                         [] ->
-                            -- Debug.crash "Graph.heightLevels: Reached a branch which is impossible by invariants. Please file a bug report!"
-                            []
+                            crashHack "Graph.heightLevels: Reached a branch which is impossible by invariants. Please file a bug report!"
 
                         level :: levels ->
                             (source :: level) :: levels
@@ -1219,7 +1247,7 @@ topologicalSort (AcyclicGraph graph ordering) =
         error =
             "Graph.topologicalSort: Invalid `AcyclicGraph`, where the ordering contained nodes not present in the graph"
     in
-    List.filterMap (\id -> get id graph) ordering
+    List.map (\id -> unsafeGet error id graph) ordering
 
 
 {-| Decomposes a graph into its strongly connected components.
