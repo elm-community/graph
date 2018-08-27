@@ -134,8 +134,9 @@ isValidTopologicalOrderingOf graph ordering =
                 maybeIds
                     |> Maybe.andThen
                         (\ids ->
-                            if List.all (\i ->IntDict.member i ids) (IntDict.keys ctx.incoming) then
+                            if List.all (\i -> IntDict.member i ids) (IntDict.keys ctx.incoming) then
                                 ids |> IntDict.insert ctx.node.id () |> Just
+
                             else
                                 Nothing
                         )
