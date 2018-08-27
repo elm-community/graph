@@ -1,0 +1,22 @@
+{
+    "type": "package",
+    "name": "elm-community/graph",
+    "summary": "Handling graphs the functional way.",
+    "license": "BSD-3-Clause",
+    "version": "5.0.1",
+    "exposed-modules": [
+        "Graph",
+        "Graph.Tree",
+        "Graph.DOT",
+        "Graph.TGF"
+    ],
+    "elm-version": "0.19.0 <= v < 0.20.0",
+    "dependencies": {
+        "avh4/elm-fifo": "1.0.4 <= v < 2.0.0",
+        "elm/core": "1.0.0 <= v < 2.0.0",
+        "elm-community/intdict": "3.0.0 <= v < 4.0.0"
+    },
+    "test-dependencies": {
+        "elm-explorations/test": "1.0.0 <= v < 2.0.0"
+    }
+}

@@ -40,6 +40,7 @@ all =
                                     ( s
                                     , if s == 1 then
                                         [ 2, 3, 4 ]
+
                                       else
                                         []
                                     )

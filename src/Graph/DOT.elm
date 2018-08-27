@@ -1,12 +1,7 @@
-module Graph.DOT
-    exposing
-        ( Rankdir(..)
-        , Styles
-        , defaultStyles
-        , output
-        , outputWithStyles
-        , outputWithStylesAndAttributes
-        )
+module Graph.DOT exposing
+    ( output
+    , Styles, Rankdir(..), defaultStyles, outputWithStyles, outputWithStylesAndAttributes
+    )
 
 {-| This module provides a means of converting the `Graph` data type into a
 valid [DOT](https://en.wikipedia.org/wiki/DOT_(graph_description_language))
@@ -125,13 +120,14 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
         attrAssocs : Dict String String -> String
         attrAssocs =
             Dict.toList
-                >> List.map (\( k, v ) -> k ++ "=" ++ Basics.toString v)
+                >> List.map (\( k, v ) -> k ++ "=" ++ v)
                 >> String.join ", "
 
         makeAttrs : Dict String String -> String
         makeAttrs d =
             if Dict.isEmpty d then
                 ""
+
             else
                 " [" ++ attrAssocs d ++ "]"
 
@@ -160,9 +156,9 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
 
         edge e =
             "  "
-                ++ Basics.toString e.from
+                ++ String.fromInt e.from
                 ++ " -> "
-                ++ Basics.toString e.to
+                ++ String.fromInt e.to
                 ++ makeAttrs (edgeAttrs e.label)
 
         nodesString =
@@ -171,12 +167,26 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
 
         node n =
             "  "
-                ++ Basics.toString n.id
+                ++ String.fromInt n.id
                 ++ makeAttrs (nodeAttrs n.label)
+
+        rankDirToString r =
+            case r of
+                TB ->
+                    "TB"
+
+                LR ->
+                    "LR"
+
+                BT ->
+                    "BT"
+
+                RL ->
+                    "RL"
     in
     String.join "\n"
         [ "digraph G {"
-        , "  rankdir=" ++ toString styles.rankdir
+        , "  rankdir=" ++ rankDirToString styles.rankdir
         , "  graph [" ++ styles.graph ++ "]"
         , "  node [" ++ styles.node ++ "]"
         , "  edge [" ++ styles.edge ++ "]"

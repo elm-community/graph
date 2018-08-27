@@ -1,54 +1,17 @@
-module Graph
-    exposing
-        ( AcyclicGraph
-        , Adjacency
-        , BfsNodeVisitor
-        , DfsNodeVisitor
-        , Edge
-        , Graph
-        , NeighborSelector
-        , Node
-        , NodeContext
-        , NodeId
-        , SimpleNodeVisitor
-        , alongIncomingEdges
-        , alongOutgoingEdges
-        , bfs
-        , checkAcyclic
-        , dfs
-        , dfsForest
-        , dfsTree
-        , edges
-        , empty
-        , fold
-        , fromNodeLabelsAndEdgePairs
-        , fromNodesAndEdges
-        , get
-        , guidedBfs
-        , guidedDfs
-        , heightLevels
-        , ignorePath
-        , inducedSubgraph
-        , insert
-        , isEmpty
-        , mapContexts
-        , mapEdges
-        , mapNodes
-        , member
-        , nodeIdRange
-        , nodeIds
-        , nodes
-        , onDiscovery
-        , onFinish
-        , remove
-        , reverseEdges
-        , size
-        , stronglyConnectedComponents
-        , symmetricClosure
-        , toString
-        , topologicalSort
-        , update
-        )
+module Graph exposing
+    ( NodeId, Node, Edge, Adjacency, NodeContext, Graph
+    , empty, update, insert, remove, inducedSubgraph
+    , isEmpty, size, member, get, nodeIdRange
+    , nodeIds, nodes, edges, fromNodesAndEdges, fromNodeLabelsAndEdgePairs
+    , fold, mapContexts, mapNodes, mapEdges, reverseEdges, symmetricClosure
+    , AcyclicGraph, checkAcyclic
+    , NeighborSelector, alongOutgoingEdges, alongIncomingEdges, SimpleNodeVisitor
+    , DfsNodeVisitor, onDiscovery, onFinish, dfs, dfsTree, dfsForest, guidedDfs
+    , BfsNodeVisitor, ignorePath, bfs, guidedBfs
+    , topologicalSort, heightLevels
+    , stronglyConnectedComponents
+    , toString
+    )
 
 {-| This module contains the primitives to build, update and traverse graphs.
 If you find that this module is hard to use or the documentation
@@ -243,19 +206,22 @@ computeEdgeDiff old new =
     let
         collectUpdates edgeUpdate updatedId label =
             let
-                replaceUpdate old =
-                    case ( old, edgeUpdate label ) of
+                replaceUpdate old_ =
+                    case ( old_, edgeUpdate label ) of
                         ( Just (Remove oldLbl), Insert newLbl ) ->
                             if oldLbl == newLbl then
                                 Nothing
+
                             else
                                 Just (Insert newLbl)
 
                         ( Just (Remove _), Remove _ ) ->
-                            Debug.crash "Graph.computeEdgeDiff: Collected two removals for the same edge. This is an error in the implementation of Graph and you should file a bug report!"
+                            -- Debug.crash "Graph.computeEdgeDiff: Collected two removals for the same edge. This is an error in the implementation of Graph and you should file a bug report!"
+                            Nothing
 
                         ( Just (Insert _), _ ) ->
-                            Debug.crash "Graph.computeEdgeDiff: Collected inserts before removals. This is an error in the implementation of Graph and you should file a bug report!"
+                            -- Debug.crash "Graph.computeEdgeDiff: Collected inserts before removals. This is an error in the implementation of Graph and you should file a bug report!"
+                            Nothing
 
                         ( Nothing, eu ) ->
                             Just eu
@@ -282,6 +248,7 @@ computeEdgeDiff old new =
         ( Just rem, Just ins ) ->
             if rem == ins then
                 emptyDiff
+
             else
                 { outgoing = IntDict.empty |> collect Remove rem.incoming |> collect Insert ins.incoming
                 , incoming = IntDict.empty |> collect Remove rem.outgoing |> collect Insert ins.outgoing
@@ -422,7 +389,7 @@ remove nodeId graph =
 of a number of node ids.
 -}
 inducedSubgraph : List NodeId -> Graph n e -> Graph n e
-inducedSubgraph nodeIds graph =
+inducedSubgraph nodeIds_ graph =
     let
         insertContextById nodeId acc =
             case get nodeId graph of
@@ -432,7 +399,7 @@ inducedSubgraph nodeIds graph =
                 Nothing ->
                     acc
     in
-    List.foldl insertContextById empty nodeIds
+    List.foldl insertContextById empty nodeIds_
 
 
 
@@ -574,7 +541,7 @@ by an edge labeled "->".
 
 -}
 fromNodesAndEdges : List (Node n) -> List (Edge e) -> Graph n e
-fromNodesAndEdges nodes edges =
+fromNodesAndEdges nodes_ edges_ =
     let
         nodeRep =
             List.foldl
@@ -582,7 +549,7 @@ fromNodesAndEdges nodes edges =
                     IntDict.insert n.id (NodeContext n IntDict.empty IntDict.empty)
                 )
                 IntDict.empty
-                nodes
+                nodes_
 
         addEdge edge rep =
             let
@@ -599,10 +566,11 @@ fromNodesAndEdges nodes edges =
         addEdgeIfValid edge rep =
             if IntDict.member edge.from rep && IntDict.member edge.to rep then
                 addEdge edge rep
+
             else
                 rep
     in
-    Graph (List.foldl addEdgeIfValid nodeRep edges)
+    Graph (List.foldl addEdgeIfValid nodeRep edges_)
 
 
 {-| A more convenient version of `fromNodesAndEdges`, when edges are unlabeled
@@ -619,17 +587,17 @@ unlabeled `Edge`s.
 fromNodeLabelsAndEdgePairs : List n -> List ( NodeId, NodeId ) -> Graph n ()
 fromNodeLabelsAndEdgePairs labels edgePairs =
     let
-        nodes =
+        nodes_ =
             labels
                 |> List.foldl
-                    (\lbl ( id, nodes ) -> ( id + 1, Node id lbl :: nodes ))
+                    (\lbl ( id, nodes__ ) -> ( id + 1, Node id lbl :: nodes__ ))
                     ( 0, [] )
                 |> Tuple.second
 
-        edges =
+        edges_ =
             List.map (\( from, to ) -> Edge from to ()) edgePairs
     in
-    fromNodesAndEdges nodes edges
+    fromNodesAndEdges nodes_ edges_
 
 
 
@@ -646,12 +614,12 @@ so that the fold can exit early when the suspended accumulator is not forced.
 
 -}
 fold : (NodeContext n e -> acc -> acc) -> acc -> Graph n e -> acc
-fold f acc graph =
+fold f startingAcc startingGraph =
     let
-        go acc graph1 =
+        go acc graph =
             let
                 maybeContext =
-                    graph1
+                    graph
                         |> nodeIdRange
                         |> Maybe.map Tuple.first
                         |> Maybe.andThen (\id -> get id graph)
@@ -660,12 +628,12 @@ fold f acc graph =
             in
             case maybeContext of
                 Just ctx ->
-                    go (f ctx acc) (remove ctx.node.id graph1)
+                    go (f ctx acc) (remove ctx.node.id graph)
 
                 Nothing ->
                     acc
     in
-    go acc graph
+    go startingAcc startingGraph
 
 
 {-| Maps each node context to another one. This may change edge and node labels
@@ -684,10 +652,9 @@ mapContexts f =
     fold (\ctx -> insert (f ctx)) empty
 
 
-{-| Maps over node labels, possibly changing their types. Leaves the graph
-topology intact.
+{-| Maps over node labels Leaves the graph topology intact.
 -}
-mapNodes : (n1 -> n2) -> Graph n1 e -> Graph n2 e
+mapNodes : (n -> n) -> Graph n e -> Graph n e
 mapNodes f =
     fold
         (\ctx ->
@@ -699,10 +666,10 @@ mapNodes f =
         empty
 
 
-{-| Maps over edge labels, possibly chaing their types. Leaves the graph
+{-| Maps over edge labels Leaves the graph
 topology intact.
 -}
-mapEdges : (e1 -> e2) -> Graph n e1 -> Graph n e2
+mapEdges : (e -> e) -> Graph n e -> Graph n e
 mapEdges f =
     fold
         (\ctx ->
@@ -730,17 +697,7 @@ type AcyclicGraph n e
     = AcyclicGraph (Graph n e) (List NodeId)
 
 
-unsafeGet : String -> NodeId -> Graph n e -> NodeContext n e
-unsafeGet msg id graph =
-    case get id graph of
-        Nothing ->
-            Debug.crash msg
-
-        Just ctx ->
-            ctx
-
-
-checkForBackEdges : List NodeId -> Graph n e -> Result (Edge e) (AcyclicGraph n e)
+checkForBackEdges : List NodeId -> Graph n e -> Result () (AcyclicGraph n e)
 checkForBackEdges ordering graph =
     let
         check id ( backSet, _ ) =
@@ -748,21 +705,20 @@ checkForBackEdges ordering graph =
                 backSetWithId =
                     IntDict.insert id () backSet
 
-                error =
-                    "Graph.checkForBackEdges: `ordering` didn't contain `id`"
-
-                ctx =
-                    unsafeGet error id graph
-
-                backEdges =
-                    IntDict.intersect ctx.outgoing backSetWithId
+                backEdge =
+                    get id graph
+                        |> Maybe.andThen
+                            (.outgoing
+                                >> IntDict.intersect backSetWithId
+                                >> IntDict.findMin
+                            )
             in
-            case IntDict.findMin backEdges of
+            case backEdge of
                 Nothing ->
                     Ok ( backSetWithId, () )
 
                 Just ( to, label ) ->
-                    Err (Edge id to label)
+                    Err ()
 
         success _ =
             AcyclicGraph graph ordering
@@ -776,13 +732,11 @@ checkForBackEdges ordering graph =
 
 {-| `checkAcyclic graph` checks `graph` for cycles.
 
-If there are any cycles, this will return `Err edge`,
-where `edge` is an `Edge` that is part of a cycle.
 If there aren't any cycles, this will return `Ok acyclic`, where
 `acyclic` is an `AcyclicGraph` that witnesses this fact.
 
 -}
-checkAcyclic : Graph n e -> Result (Edge e) (AcyclicGraph n e)
+checkAcyclic : Graph n e -> Result () (AcyclicGraph n e)
 checkAcyclic graph =
     let
         reversePostOrder =
@@ -825,15 +779,16 @@ symmetricClosure edgeMerger =
         orderedEdgeMerger from to outgoing incoming =
             if from <= to then
                 edgeMerger from to outgoing incoming
+
             else
                 edgeMerger to from incoming outgoing
 
         updateContext nodeId ctx =
             let
-                edges =
+                edges_ =
                     IntDict.uniteWith (orderedEdgeMerger nodeId) ctx.outgoing ctx.incoming
             in
-            { ctx | outgoing = edges, incoming = edges }
+            { ctx | outgoing = edges_, incoming = edges_ }
     in
     unGraph >> IntDict.map updateContext >> Graph
 
@@ -969,7 +924,7 @@ guidedDfs :
     -> acc
     -> Graph n e
     -> ( acc, Graph n e )
-guidedDfs selectNeighbors visitNode seeds acc graph =
+guidedDfs selectNeighbors visitNode startingSeeds startingAcc startingGraph =
     let
         go seeds acc graph =
             case seeds of
@@ -998,7 +953,7 @@ guidedDfs selectNeighbors visitNode seeds acc graph =
                             in
                             go seeds1 accAfterFinish graph1
     in
-    go seeds acc graph
+    go startingSeeds startingAcc startingGraph
 
 
 {-| An off-the-shelf depth-first traversal. It will visit all components of the
@@ -1024,8 +979,9 @@ dfsTree seed graph =
         [ tree ] ->
             tree
 
-        _ ->
-            Debug.crash "dfsTree: There can't be more than one DFS tree. This invariant is violated, please report this bug."
+        tree :: _ ->
+            -- Debug.crash "dfsTree: There can't be more than one DFS tree. This invariant is violated, please report this bug."
+            tree
 
 
 {-| `dfsForest seeds graph` computes a depth-first spanning `Forest` of the
@@ -1083,7 +1039,8 @@ ignorePath : SimpleNodeVisitor n e acc -> BfsNodeVisitor n e acc
 ignorePath visit path _ acc =
     case path of
         [] ->
-            Debug.crash "Graph.ignorePath: No algorithm should ever pass an empty path into this BfsNodeVisitor."
+            -- Debug.crash "Graph.ignorePath: No algorithm should ever pass an empty path into this BfsNodeVisitor."
+            acc
 
         ctx :: _ ->
             visit ctx acc
@@ -1112,10 +1069,10 @@ guidedBfs :
     -> acc
     -> Graph n e
     -> ( acc, Graph n e )
-guidedBfs selectNeighbors visitNode seeds acc graph =
+guidedBfs selectNeighbors visitNode startingSeeds startingAcc startingGraph =
     let
-        enqueueMany distance parentPath nodeIds queue =
-            nodeIds
+        enqueueMany distance parentPath nodeIds_ queue =
+            nodeIds_
                 |> List.map (\id -> ( id, parentPath, distance ))
                 |> List.foldl Fifo.insert queue
 
@@ -1129,7 +1086,7 @@ guidedBfs selectNeighbors visitNode seeds acc graph =
                     case get next graph of
                         -- This can actually happen since we don't filter for already visited nodes.
                         -- That would be an opportunity for time-memory-tradeoff.
-                        -- E.g. Passing along a set of visited nodeIds.
+                        -- E.g. Passing along a set of visited nodeIds_.
                         Nothing ->
                             go seeds1 acc graph
 
@@ -1146,7 +1103,7 @@ guidedBfs selectNeighbors visitNode seeds acc graph =
                             in
                             go seeds2 accAfterVisit (remove next graph)
     in
-    go (enqueueMany 0 [] seeds Fifo.empty) acc graph
+    go (enqueueMany 0 [] startingSeeds Fifo.empty) startingAcc startingGraph
 
 
 {-| An off-the-shelf breadth-first traversal. It will visit all components of the
@@ -1182,7 +1139,7 @@ There is the excellent reference
 
 -}
 heightLevels : AcyclicGraph n e -> List (List (NodeContext n e))
-heightLevels (AcyclicGraph graph _) =
+heightLevels (AcyclicGraph startingGraph _) =
     let
         isSource ctx =
             IntDict.isEmpty ctx.incoming
@@ -1192,11 +1149,12 @@ heightLevels (AcyclicGraph graph _) =
                 (\ctx acc ->
                     if isSource ctx then
                         ctx :: acc
+
                     else
                         acc
                 )
                 []
-                graph
+                startingGraph
 
         countIndegrees =
             fold
@@ -1217,12 +1175,13 @@ heightLevels (AcyclicGraph graph _) =
             in
             case IntDict.get id indegreesDec of
                 Just 0 ->
-                    case get id graph of
+                    case get id startingGraph of
                         Just ctx ->
                             ( ctx :: nextLevel, indegreesDec )
 
                         Nothing ->
-                            Debug.crash "Graph.heightLevels: Could not get a node of a graph which should be there by invariants. Please file a bug report!"
+                            -- Debug.crash "Graph.heightLevels: Could not get a node of a graph which should be there by invariants. Please file a bug report!"
+                            ( nextLevel, indegreesDec )
 
                 _ ->
                     ( nextLevel, indegreesDec )
@@ -1245,12 +1204,13 @@ heightLevels (AcyclicGraph graph _) =
                     in
                     case go currentLevel1 nextLevel1 indegrees1 (remove source.node.id graph) of
                         [] ->
-                            Debug.crash "Graph.heightLevels: Reached a branch which is impossible by invariants. Please file a bug report!"
+                            -- Debug.crash "Graph.heightLevels: Reached a branch which is impossible by invariants. Please file a bug report!"
+                            []
 
                         level :: levels ->
                             (source :: level) :: levels
     in
-    go sources [] (countIndegrees graph) graph
+    go sources [] (countIndegrees startingGraph) startingGraph
 
 
 {-| Computes a
@@ -1263,7 +1223,7 @@ topologicalSort (AcyclicGraph graph ordering) =
         error =
             "Graph.topologicalSort: Invalid `AcyclicGraph`, where the ordering contained nodes not present in the graph"
     in
-    List.map (\id -> unsafeGet error id graph) ordering
+    List.filterMap (\id -> get id graph) ordering
 
 
 {-| Decomposes a graph into its strongly connected components.
@@ -1301,16 +1261,9 @@ stronglyConnectedComponents graph =
 {-| Returns a string representation of the graph in the format of
 `Graph.fromNodesAndEdges [<nodes>] [<edges>]`.
 -}
-toString : Graph n e -> String
-toString graph =
-    let
-        nodeList =
-            nodes graph
-
-        edgeList =
-            edges graph
-    in
+toString : (n -> String) -> (e -> String) -> Graph n e -> String
+toString nodeToString edgeToString graph =
     "Graph.fromNodesAndEdges "
-        ++ Basics.toString nodeList
+        ++ (String.join ", " <| List.map (\{ id, label } -> "Node " ++ String.fromInt id ++ nodeToString label) <| nodes graph)
         ++ " "
-        ++ Basics.toString edgeList
+        ++ (String.join ", " <| List.map (\{ from, to, label } -> "Edge " ++ String.fromInt from ++ "->" ++ String.fromInt to ++ edgeToString label) <| edges graph)

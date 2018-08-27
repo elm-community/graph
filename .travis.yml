@@ -3,10 +3,8 @@ node_js:
 - "5"
 install:
 - npm install -g elm
-- npm install -g elm-format@0.7.0-exp
-- npm install -g elm-test
-- elm-package install -y
-- pushd tests && elm-package install -y && popd
-- elm-format --validate src/ tests/Tests.elm tests/Tests/
+- npm install -g elm-format@0.8.0
+- npm install -g elm-test@beta
+- elm-format --validate src/ tests/
 script:
 - elm-test
