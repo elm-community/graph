@@ -46,7 +46,7 @@ all =
   0 [label="Welcome"]
   1 [label="To"]
   2 [label="Web"]
-  3 [label="\\"GraphViz\\"!"]
+  3 [label=""GraphViz"!"]
 }"""
 
                     actual =
@@ -187,7 +187,7 @@ all =
                                 Dict.empty
 
                             Just pw ->
-                                Dict.singleton "penwidth" (String.fromInt pw)
+                                Dict.singleton "penwidth" (Debug.toString pw)
 
                     expected =
                         """digraph G {

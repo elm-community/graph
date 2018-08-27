@@ -120,7 +120,7 @@ outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
         attrAssocs : Dict String String -> String
         attrAssocs =
             Dict.toList
-                >> List.map (\( k, v ) -> k ++ "=" ++ v)
+                >> List.map (\( k, v ) -> k ++ "=\"" ++ v ++ "\"")
                 >> String.join ", "
 
         makeAttrs : Dict String String -> String
