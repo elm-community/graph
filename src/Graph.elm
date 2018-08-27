@@ -614,12 +614,12 @@ so that the fold can exit early when the suspended accumulator is not forced.
 
 -}
 fold : (NodeContext n e -> acc -> acc) -> acc -> Graph n e -> acc
-fold f startingAcc startingGraph =
+fold f acc graph =
     let
-        go acc graph =
+        go acc1 graph1 =
             let
                 maybeContext =
-                    graph
+                    graph1
                         |> nodeIdRange
                         |> Maybe.map Tuple.first
                         |> Maybe.andThen (\id -> get id graph)
@@ -628,12 +628,12 @@ fold f startingAcc startingGraph =
             in
             case maybeContext of
                 Just ctx ->
-                    go (f ctx acc) (remove ctx.node.id graph)
+                    go (f ctx acc1) (remove ctx.node.id graph1)
 
                 Nothing ->
-                    acc
+                    acc1
     in
-    go startingAcc startingGraph
+    go acc graph
 
 
 {-| Maps each node context to another one. This may change edge and node labels
@@ -652,7 +652,7 @@ mapContexts f =
     fold (\ctx -> insert (f ctx)) empty
 
 
-{-| Maps over node labels Leaves the graph topology intact.
+{-| Maps over node labels. Leaves the graph topology intact.
 -}
 mapNodes : (n -> n) -> Graph n e -> Graph n e
 mapNodes f =
@@ -1264,6 +1264,6 @@ stronglyConnectedComponents graph =
 toString : (n -> String) -> (e -> String) -> Graph n e -> String
 toString nodeToString edgeToString graph =
     "Graph.fromNodesAndEdges "
-        ++ (String.join ", " <| List.map (\{ id, label } -> "Node " ++ String.fromInt id ++ nodeToString label) <| nodes graph)
+        ++ (String.join ", " <| List.map (\{ id, label } -> "Node " ++ String.fromInt id ++ " " ++ nodeToString label) <| nodes graph)
         ++ " "
-        ++ (String.join ", " <| List.map (\{ from, to, label } -> "Edge " ++ String.fromInt from ++ "->" ++ String.fromInt to ++ edgeToString label) <| edges graph)
+        ++ (String.join ", " <| List.map (\{ from, to, label } -> "Edge " ++ String.fromInt from ++ "->" ++ String.fromInt to ++ " " ++ edgeToString label) <| edges graph)
