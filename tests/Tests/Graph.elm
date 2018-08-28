@@ -75,6 +75,23 @@ dressUp =
     Graph.fromNodesAndEdges nodes edges
 
 
+simple : Graph String (Maybe String)
+simple =
+    let
+        nodes =
+            [ Node 0 "first"
+            , Node 1 "second"
+            , Node 2 "third"
+            ]
+
+        edges =
+            [ Edge 0 1 Nothing
+            , Edge 0 2 (Just "relationship")
+            ]
+    in
+    Graph.fromNodesAndEdges nodes edges
+
+
 dressUpWithCycle : Graph String ()
 dressUpWithCycle =
     let
@@ -152,7 +169,7 @@ expectTopologicalOrderingOf graph ordering =
         message =
             String.join "\n"
                 [ "Expected a valid topological ordering of "
-                , "    " ++ Graph.toString identity (always "") graph
+                , "    " ++ Graph.toString Just (always <| Just "") graph
                 , "but got"
                 , "    " ++ Debug.toString ordering
                 ]
@@ -361,6 +378,15 @@ all =
                 -- This should be backed by more tests, but I'm not in the mood for that :/
                 ]
 
+        toStringTests =
+            describe "toString"
+                [ test "works as expected" <|
+                    \() ->
+                        Expect.equal
+                            (Graph.toString Just identity simple)
+                            "Graph [Node 0 (first), Node 1 (second), Node 2 (third)] [Edge 0->2 (relationship), Edge 0->1]"
+                ]
+
         graphOpsTests =
             describe "Graph ops"
                 [ test "symmetricClosure is symmetric" <|
@@ -461,7 +487,7 @@ all =
                 sg nodeIds =
                     connectedComponents
                         |> Graph.inducedSubgraph nodeIds
-                        |> Graph.toString String.fromChar (always "")
+                        |> Graph.toString (Just << String.fromChar) (always <| Just "")
             in
             describe "Strongly connected components"
                 [ test "The input graph was acyclic" <|
@@ -479,7 +505,7 @@ all =
                             ]
                             (case result of
                                 Err components ->
-                                    List.map (Graph.toString String.fromChar (always "")) components
+                                    List.map (Graph.toString (Just << String.fromChar) (always <| Just "")) components
 
                                 Ok _ ->
                                     []
@@ -511,6 +537,7 @@ all =
                 , fromNodesAndEdgesTests
                 , foldTests
                 , mapTests
+                , toStringTests
                 , graphOpsTests
                 , checkAcyclicTests
                 , topologicalSortTests

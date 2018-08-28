@@ -1282,12 +1282,44 @@ stronglyConnectedComponents graph =
 {- toString -}
 
 
-{-| Returns a string representation of the graph in the format of
-`Graph.fromNodesAndEdges [<nodes>] [<edges>]`.
+{-| Returns a string representation of the graph.
 -}
-toString : (n -> String) -> (e -> String) -> Graph n e -> String
+toString : (n -> Maybe String) -> (e -> Maybe String) -> Graph n e -> String
 toString nodeToString edgeToString graph =
-    "Graph.fromNodesAndEdges "
-        ++ (String.join ", " <| List.map (\{ id, label } -> "Node " ++ String.fromInt id ++ " " ++ nodeToString label) <| nodes graph)
-        ++ " "
-        ++ (String.join ", " <| List.map (\{ from, to, label } -> "Edge " ++ String.fromInt from ++ "->" ++ String.fromInt to ++ " " ++ edgeToString label) <| edges graph)
+    "Graph ["
+        ++ (String.join ", " <|
+                List.map
+                    (\{ id, label } ->
+                        "Node "
+                            ++ String.fromInt id
+                            ++ (case nodeToString label of
+                                    Nothing ->
+                                        ""
+
+                                    Just text ->
+                                        " (" ++ text ++ ")"
+                               )
+                    )
+                <|
+                    nodes graph
+           )
+        ++ "] ["
+        ++ (String.join ", " <|
+                List.map
+                    (\{ from, to, label } ->
+                        "Edge "
+                            ++ String.fromInt from
+                            ++ "->"
+                            ++ String.fromInt to
+                            ++ (case edgeToString label of
+                                    Nothing ->
+                                        ""
+
+                                    Just text ->
+                                        " (" ++ text ++ ")"
+                               )
+                    )
+                <|
+                    edges graph
+           )
+        ++ "]"
