@@ -17,7 +17,7 @@ all =
                         [ Node 0 "Welcome"
                         , Node 1 "To"
                         , Node 2 "Web"
-                        , Node 3 "\"GraphViz\"!"
+                        , Node 3 "\\\"GraphViz\\\"!"
                         ]
 
                     e from to =
@@ -173,21 +173,21 @@ all =
                     g =
                         Graph.fromNodesAndEdges nodes edges
 
-                    nodeAttrs n =
-                        case n.style of
+                    nodeAttrs node =
+                        case node.style of
                             Nothing ->
-                                Dict.singleton "label" n.text
+                                Dict.singleton "label" node.text
 
                             Just st ->
-                                Dict.fromList [ ( "label", n.text ), ( "style", st ) ]
+                                Dict.fromList [ ( "label", node.text ), ( "style", st ) ]
 
-                    edgeAttrs e =
-                        case e.penwidth of
+                    edgeAttrs edge =
+                        case edge.penwidth of
                             Nothing ->
                                 Dict.empty
 
                             Just pw ->
-                                Dict.singleton "penwidth" (Basics.toString pw)
+                                Dict.singleton "penwidth" (Debug.toString pw)
 
                     expected =
                         """digraph G {

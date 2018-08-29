@@ -75,6 +75,23 @@ dressUp =
     Graph.fromNodesAndEdges nodes edges
 
 
+simple : Graph String (Maybe String)
+simple =
+    let
+        nodes =
+            [ Node 0 "first"
+            , Node 1 "second"
+            , Node 2 "third"
+            ]
+
+        edges =
+            [ Edge 0 1 Nothing
+            , Edge 0 2 (Just "relationship")
+            ]
+    in
+    Graph.fromNodesAndEdges nodes edges
+
+
 dressUpWithCycle : Graph String ()
 dressUpWithCycle =
     let
@@ -134,8 +151,9 @@ isValidTopologicalOrderingOf graph ordering =
                 maybeIds
                     |> Maybe.andThen
                         (\ids ->
-                            if List.all (flip IntDict.member ids) (IntDict.keys ctx.incoming) then
+                            if List.all (\i -> IntDict.member i ids) (IntDict.keys ctx.incoming) then
                                 ids |> IntDict.insert ctx.node.id () |> Just
+
                             else
                                 Nothing
                         )
@@ -145,15 +163,15 @@ isValidTopologicalOrderingOf graph ordering =
         |> (&&) (List.length ordering == Graph.size graph)
 
 
-expectTopologicalOrderingOf : Graph n e -> List (NodeContext n e) -> Expect.Expectation
+expectTopologicalOrderingOf : Graph String e -> List (NodeContext String e) -> Expect.Expectation
 expectTopologicalOrderingOf graph ordering =
     let
         message =
             String.join "\n"
                 [ "Expected a valid topological ordering of "
-                , "    " ++ Graph.toString graph
+                , "    " ++ Graph.toString Just (always <| Just "") graph
                 , "but got"
-                , "    " ++ toString ordering
+                , "    " ++ Debug.toString ordering
                 ]
     in
     Expect.true message (isValidTopologicalOrderingOf graph ordering)
@@ -277,7 +295,7 @@ all =
                 , test "existing node - size" <|
                     \() ->
                         Expect.equal
-                            (dressUp |> Graph.size |> flip (-) 1)
+                            (dressUp |> Graph.size |> (\i -> (-) i 1))
                             (dressUp |> Graph.remove 0 |> Graph.size)
                 , test "existing node - can't get it" <|
                     \() ->
@@ -360,6 +378,15 @@ all =
                 -- This should be backed by more tests, but I'm not in the mood for that :/
                 ]
 
+        toStringTests =
+            describe "toString"
+                [ test "works as expected" <|
+                    \() ->
+                        Expect.equal
+                            (Graph.toString Just identity simple)
+                            "Graph [Node 0 (first), Node 1 (second), Node 2 (third)] [Edge 0->2 (relationship), Edge 0->1]"
+                ]
+
         graphOpsTests =
             describe "Graph ops"
                 [ test "symmetricClosure is symmetric" <|
@@ -416,7 +443,7 @@ all =
                         case Graph.checkAcyclic dressUp of
                             Err e ->
                                 Expect.fail
-                                    ("dressUp should be acylic, but returned edge " ++ toString e)
+                                    ("dressUp should be acylic, but returned edge " ++ Debug.toString e)
 
                             Ok acyclic ->
                                 acyclic
@@ -427,7 +454,7 @@ all =
                         case Graph.checkAcyclic dressUp of
                             Err e ->
                                 Expect.fail
-                                    ("dressUp should be acylic, but returned edge " ++ toString e)
+                                    ("dressUp should be acylic, but returned edge " ++ Debug.toString e)
 
                             Ok acyclic ->
                                 acyclic
@@ -460,7 +487,7 @@ all =
                 sg nodeIds =
                     connectedComponents
                         |> Graph.inducedSubgraph nodeIds
-                        |> Graph.toString
+                        |> Graph.toString (Just << String.fromChar) (always <| Just "")
             in
             describe "Strongly connected components"
                 [ test "The input graph was acyclic" <|
@@ -478,7 +505,7 @@ all =
                             ]
                             (case result of
                                 Err components ->
-                                    List.map Graph.toString components
+                                    List.map (Graph.toString (Just << String.fromChar) (always <| Just "")) components
 
                                 Ok _ ->
                                     []
@@ -510,6 +537,7 @@ all =
                 , fromNodesAndEdgesTests
                 , foldTests
                 , mapTests
+                , toStringTests
                 , graphOpsTests
                 , checkAcyclicTests
                 , topologicalSortTests

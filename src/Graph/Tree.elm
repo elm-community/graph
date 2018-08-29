@@ -1,24 +1,10 @@
-module Graph.Tree
-    exposing
-        ( Forest
-        , Tree
-        , empty
-        , height
-        , inner
-        , isEmpty
-        , leaf
-        , levelOrder
-        , levelOrderList
-        , map
-        , postOrder
-        , postOrderList
-        , preOrder
-        , preOrderList
-        , root
-        , size
-        , unfoldForest
-        , unfoldTree
-        )
+module Graph.Tree exposing
+    ( Tree, Forest
+    , empty, leaf, inner, unfoldTree, unfoldForest
+    , map
+    , isEmpty, root, size, height
+    , levelOrder, levelOrderList, preOrder, preOrderList, postOrder, postOrderList
+    )
 
 {-| This module provides a simple tree data type of arbitrary arity (a rose tree).
 There are primitives for building and traversing such a tree.
@@ -158,7 +144,8 @@ unfoldForest next seeds =
 {-| `map f tree` applies supplied function f to every label in a tree, without changing the structure of the tree
 
     map (\x -> x + 1) empty == empty
-    map (\x -> x * 10) (inner 1 [leaf 2, leaf 3]) == (inner 10 [leaf 20, leaf 30])
+
+    map (\x -> x * 10) (inner 1 [ leaf 2, leaf 3 ]) == inner 10 [ leaf 20, leaf 30 ]
 
 -}
 map : (a -> b) -> Tree a -> Tree b
@@ -176,6 +163,7 @@ map f (MkTree totalSize maybeLabelAndChildren) =
 {-| `isEmpty tree` returns true if and only if `tree` is `empty`.
 
     isEmpty empty == True
+
     isEmpty (leaf 42) == False
 
 -}
@@ -276,18 +264,18 @@ to the children of the current node via the second parameter of visit.
 levelOrder : (label -> Forest label -> acc -> acc) -> acc -> Tree label -> acc
 levelOrder visit acc tree =
     let
-        go acc toVisit =
+        go acc_ toVisit =
             case Fifo.remove toVisit of
                 ( Nothing, _ ) ->
-                    acc
+                    acc_
 
-                ( Just tree, othersToVisit ) ->
-                    case root tree of
+                ( Just tree_, othersToVisit ) ->
+                    case root tree_ of
                         Nothing ->
-                            go acc othersToVisit
+                            go acc_ othersToVisit
 
                         Just ( label, children ) ->
-                            go (visit label children acc) (pushMany children othersToVisit)
+                            go (visit label children acc_) (pushMany children othersToVisit)
     in
     go acc (Fifo.empty |> Fifo.insert tree)
 
@@ -322,7 +310,7 @@ postOrder : (label -> Forest label -> acc -> acc) -> acc -> Tree label -> acc
 postOrder visit acc tree =
     let
         folder =
-            flip (postOrder visit)
+            \b a -> postOrder visit a b
     in
     case root tree of
         Nothing ->
@@ -360,7 +348,7 @@ preOrder : (label -> Forest label -> acc -> acc) -> acc -> Tree label -> acc
 preOrder visit acc tree =
     let
         folder =
-            flip (preOrder visit)
+            \b a -> preOrder visit a b
     in
     case root tree of
         Nothing ->

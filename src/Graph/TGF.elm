@@ -26,7 +26,7 @@ output mapNode mapEdge graph =
             Graph.nodes graph
                 |> List.map
                     (\{ id, label } ->
-                        toString id ++ " " ++ mapNode label
+                        String.fromInt id ++ " " ++ mapNode label
                     )
                 |> List.sort
 
@@ -34,7 +34,7 @@ output mapNode mapEdge graph =
             Graph.edges graph
                 |> List.map
                     (\{ from, to, label } ->
-                        toString from ++ " " ++ toString to ++ " " ++ mapEdge label
+                        String.fromInt from ++ " " ++ String.fromInt to ++ " " ++ mapEdge label
                     )
                 |> List.sort
     in
