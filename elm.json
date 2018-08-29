@@ -14,6 +14,7 @@
     "dependencies": {
         "avh4/elm-fifo": "1.0.4 <= v < 2.0.0",
         "elm/core": "1.0.0 <= v < 2.0.0",
+        "elm/json": "1.0.0 <= v < 2.0.0",
         "elm-community/intdict": "3.0.0 <= v < 4.0.0"
     },
     "test-dependencies": {

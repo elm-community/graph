@@ -28,6 +28,7 @@ GraphViz allows for customizing the graph's look via "Attrs."
 
 import Dict exposing (Dict)
 import Graph exposing (Edge, Graph, Node, edges, get, nodes)
+import Json.Encode
 
 
 {-| Converts a `Graph` into a valid DOT string.
@@ -117,10 +118,15 @@ outputWithStylesAndAttributes :
     -> String
 outputWithStylesAndAttributes styles nodeAttrs edgeAttrs graph =
     let
+        encode : String -> String
+        encode =
+            Json.Encode.string
+                >> Json.Encode.encode 0
+
         attrAssocs : Dict String String -> String
         attrAssocs =
             Dict.toList
-                >> List.map (\( k, v ) -> k ++ "=\"" ++ v ++ "\"")
+                >> List.map (\( k, v ) -> k ++ "=" ++ encode v)
                 >> String.join ", "
 
         makeAttrs : Dict String String -> String

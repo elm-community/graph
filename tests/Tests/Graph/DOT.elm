@@ -17,7 +17,7 @@ all =
                         [ Node 0 "Welcome"
                         , Node 1 "To"
                         , Node 2 "Web"
-                        , Node 3 "\\\"GraphViz\\\"!"
+                        , Node 3 "\"GraphViz\"!"
                         ]
 
                     e from to =
