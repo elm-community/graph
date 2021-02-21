@@ -2,7 +2,7 @@
     "type": "package",
     "name": "elm-community/graph",
     "summary": "Handling graphs the functional way.",
-    "license": "BSD-3-Clause",
+    "license": "MIT",
     "version": "6.0.0",
     "exposed-modules": [
         "Graph",
