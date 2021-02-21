@@ -339,7 +339,7 @@ postOrderList =
 over `tree` where `visit` is called with the label and the child sub-forest of
 the current node in addition to a supplied accumulator value.
 
-Post-order traversals work top-down: When `visit` is called for some node,
+Pre-order traversals work top-down: When `visit` is called for some node,
 `acc` already contains the value of all ancestral nodes.
 See `preOrderList` for an example on the order in which nodes are visited.
 
