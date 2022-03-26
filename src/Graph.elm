@@ -644,6 +644,12 @@ The following is a specification for reverseEdges:
     graph = fromNodesAndEdges [Node 1 "1", Node 2 "2"] [Edge 1 2 "->"]
     reverseEdges graph == mapContexts flipEdges graph
 
+Info: Make sure you are applying changes both to `incoming` and `outgoing`.
+The `Graph` data structure has inherent redundancy -- every edge in the incoming `IntDict` for a given node shows up again in the outgoing `IntDict` for the node on the other end of the edge and vice-versa.
+So you can use mapContexts  to modify graphs, but you have to make consistent edge changes between each pair of nodes during the mapping.
+Otherwise you'll get order-dependent results.
+This may not be the ideal way to "rewire" a graph.
+
 -}
 mapContexts : (NodeContext n1 e1 -> NodeContext n2 e2) -> Graph n1 e1 -> Graph n2 e2
 mapContexts f =
