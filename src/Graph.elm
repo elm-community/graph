@@ -87,10 +87,11 @@ representation.
 -}
 
 import Debug
-import Fifo as Fifo exposing (Fifo)
+import Fifo exposing (Fifo)
 import Graph.Tree as Tree exposing (Forest, Tree)
-import IntDict as IntDict exposing (IntDict)
-import Maybe as Maybe exposing (Maybe)
+import IntDict exposing (IntDict)
+import Maybe exposing (Maybe)
+import Set exposing (Set)
 
 
 {-| The type used for identifying nodes, an integer.
@@ -646,7 +647,7 @@ The following is a specification for reverseEdges:
 
 Info: Make sure you are applying changes both to `incoming` and `outgoing`.
 The `Graph` data structure has inherent redundancy -- every edge in the incoming `IntDict` for a given node shows up again in the outgoing `IntDict` for the node on the other end of the edge and vice-versa.
-So you can use mapContexts  to modify graphs, but you have to make consistent edge changes between each pair of nodes during the mapping.
+So you can use mapContexts to modify graphs, but you have to make consistent edge changes between each pair of nodes during the mapping.
 Otherwise you'll get order-dependent results.
 This may not be the ideal way to "rewire" a graph.
 
@@ -960,34 +961,42 @@ guidedDfs :
     -> ( acc, Graph n e )
 guidedDfs selectNeighbors visitNode startingSeeds startingAcc startingGraph =
     let
-        go seeds acc graph =
+        go : List NodeId -> Set NodeId -> acc -> Graph n e -> ( acc, Set NodeId, Graph n e )
+        go seeds visited acc graph =
             case seeds of
                 [] ->
                     -- We are done with this connected component, so we return acc and the rest of the graph
-                    ( acc, graph )
+                    ( acc, visited, graph )
 
                 next :: seeds1 ->
-                    case get next graph of
-                        -- This can actually happen since we don't filter for already visited nodes.
-                        -- That would be an opportunity for time-memory-tradeoff.
-                        -- E.g. Passing along a set of visited nodeIds.
-                        Nothing ->
-                            go seeds1 acc graph
+                    if Set.member next visited then
+                        go seeds1 visited acc graph
 
-                        Just ctx ->
-                            let
-                                ( accAfterDiscovery, finishNode ) =
-                                    visitNode ctx acc
+                    else
+                        case get next graph of
+                            -- This can actually happen since we don't filter for already visited nodes.
+                            -- That would be an opportunity for time-memory-tradeoff.
+                            -- E.g. Passing along a set of visited nodeIds.
+                            Nothing ->
+                                go seeds1 (Set.insert next visited) acc graph
 
-                                ( accBeforeFinish, graph1 ) =
-                                    go (selectNeighbors ctx) accAfterDiscovery (remove next graph)
+                            Just ctx ->
+                                let
+                                    ( accAfterDiscovery, finishNode ) =
+                                        visitNode ctx acc
 
-                                accAfterFinish =
-                                    finishNode accBeforeFinish
-                            in
-                            go seeds1 accAfterFinish graph1
+                                    ( accBeforeFinish, visited1, graph1 ) =
+                                        go (selectNeighbors ctx) (Set.insert next visited) accAfterDiscovery graph
+
+                                    accAfterFinish =
+                                        finishNode accBeforeFinish
+                                in
+                                go seeds1 visited1 accAfterFinish graph1
+
+        ( finalAcc, _, finalGraph ) =
+            go startingSeeds Set.empty startingAcc startingGraph
     in
-    go startingSeeds startingAcc startingGraph
+    ( finalAcc, finalGraph )
 
 
 {-| An off-the-shelf depth-first traversal. It will visit all components of the
