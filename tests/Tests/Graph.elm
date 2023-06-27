@@ -517,6 +517,74 @@ all =
                             (Graph.stronglyConnectedComponents graphWithLoop)
                 ]
 
+        dfsTests =
+            describe "DFS traversal"
+                [ test "depth-first node order on discovery" <|
+                    \() ->
+                        Expect.equal
+                            [ 0, 3, 1, 2, 6, 8, 4, 5, 7 ]
+                            (dressUp
+                                |> Graph.dfs (Graph.onDiscovery (::)) []
+                                |> List.map (.node >> .id)
+                                |> List.reverse
+                            )
+                , test "depth-first node order on finish" <|
+                    \() ->
+                        Expect.equal
+                            [ 3, 0, 8, 6, 2, 1, 4, 7, 5 ]
+                            (dressUp
+                                |> Graph.dfs (Graph.onFinish (::)) []
+                                |> List.map (.node >> .id)
+                                |> List.reverse
+                            )
+                , test "access to incoming context" <|
+                    \() ->
+                        let
+                            incoming =
+                                Graph.fold
+                                    (\ctx acc ->
+                                        ( ctx.node.id, IntDict.keys ctx.incoming )
+                                            :: acc
+                                    )
+                                    []
+                                    dressUp
+                                    |> List.sortBy Tuple.first
+                        in
+                        Expect.equal
+                            incoming
+                            (dressUp
+                                |> Graph.dfs (Graph.onDiscovery (::)) []
+                                |> List.map
+                                    (\ctx ->
+                                        ( ctx.node.id, IntDict.keys ctx.incoming )
+                                    )
+                                |> List.sortBy Tuple.first
+                            )
+                , test "access to outgoing context" <|
+                    \() ->
+                        let
+                            outgoing =
+                                Graph.fold
+                                    (\ctx acc ->
+                                        ( ctx.node.id, IntDict.keys ctx.outgoing )
+                                            :: acc
+                                    )
+                                    []
+                                    dressUp
+                                    |> List.sortBy Tuple.first
+                        in
+                        Expect.equal
+                            outgoing
+                            (dressUp
+                                |> Graph.dfs (Graph.onDiscovery (::)) []
+                                |> List.map
+                                    (\ctx ->
+                                        ( ctx.node.id, IntDict.keys ctx.outgoing )
+                                    )
+                                |> List.sortBy Tuple.first
+                            )
+                ]
+
         unitTests =
             describe "unit tests"
                 [ emptyTests
@@ -538,6 +606,7 @@ all =
                 , topologicalSortTests
                 , bfsTests
                 , sccTests
+                , dfsTests
                 ]
 
         examples =
@@ -666,13 +735,11 @@ symmetricClosureExample =
         == True
 
 
-onDiscoveryExample : ()
-
-
 
 -- Just let it compile
 
 
+onDiscoveryExample : ()
 onDiscoveryExample =
     let
         dfsPostOrder : Graph n e -> List (NodeContext n e)
@@ -682,13 +749,11 @@ onDiscoveryExample =
     dfsPostOrder Graph.empty |> (\_ -> ())
 
 
-onFinishExample : ()
-
-
 
 -- Just let it compile
 
 
+onFinishExample : ()
 onFinishExample =
     let
         dfsPreOrder : Graph n e -> List (NodeContext n e)
@@ -698,13 +763,11 @@ onFinishExample =
     dfsPreOrder Graph.empty |> (\_ -> ())
 
 
-ignorePathExample : ()
-
-
 
 -- Just let it compile
 
 
+ignorePathExample : ()
 ignorePathExample =
     let
         bfsLevelOrder : Graph n e -> List (NodeContext n e)
