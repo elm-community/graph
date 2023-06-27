@@ -516,12 +516,78 @@ all =
                     \() ->
                         Expect.equal True
                             (isOk (Graph.stronglyConnectedComponents dressUp))
-                            |>Expect.onFail "Should be Ok"
+                            |> Expect.onFail "Should be Ok"
                 , test "The input graph has loops" <|
                     \() ->
                         Expect.equal True
                             (isErr (Graph.stronglyConnectedComponents graphWithLoop))
-                            |>Expect.onFail "Should be Err"
+                            |> Expect.onFail "Should be Err"
+                ]
+
+        dfsTests =
+            describe "DFS traversal"
+                [ test "depth-first node order on discovery" <|
+                    \() ->
+                        Expect.equal
+                            [ 0, 3, 1, 2, 6, 8, 4, 5, 7 ]
+                            (dressUp
+                                |> Graph.dfs (Graph.onDiscovery (::)) []
+                                |> List.map (.node >> .id)
+                                |> List.reverse
+                            )
+                , test "depth-first node order on finish" <|
+                    \() ->
+                        Expect.equal
+                            [ 3, 0, 8, 6, 2, 1, 4, 7, 5 ]
+                            (dressUp
+                                |> Graph.dfs (Graph.onFinish (::)) []
+                                |> List.map (.node >> .id)
+                                |> List.reverse
+                            )
+                , test "access to incoming context" <|
+                    \() ->
+                        let
+                            incoming =
+                                Graph.fold (\ctx acc ->
+                                   (ctx.node.id, IntDict.keys ctx.incoming)
+                                   :: acc
+                                )
+                                []
+                                dressUp
+                                |> List.sortBy Tuple.first
+                        in
+                        Expect.equal
+                            incoming
+                            (dressUp
+                                |> Graph.dfs (Graph.onDiscovery (::)) []
+                                |> List.map
+                                    (\ctx ->
+                                        ( ctx.node.id, IntDict.keys ctx.incoming )
+                                    )
+                                |> List.sortBy Tuple.first
+                            )
+                , test "access to outgoing context" <|
+                    \() ->
+                        let
+                            outgoing =
+                                Graph.fold (\ctx acc ->
+                                   (ctx.node.id, IntDict.keys ctx.outgoing)
+                                   :: acc
+                                )
+                                []
+                                dressUp
+                                |> List.sortBy Tuple.first
+                        in
+                        Expect.equal
+                            outgoing
+                            (dressUp
+                                |> Graph.dfs (Graph.onDiscovery (::)) []
+                                |> List.map
+                                    (\ctx ->
+                                        ( ctx.node.id, IntDict.keys ctx.outgoing )
+                                    )
+                                |> List.sortBy Tuple.first
+                            )
                 ]
 
         unitTests =
@@ -544,6 +610,7 @@ all =
                 , topologicalSortTests
                 , bfsTests
                 , sccTests
+                , dfsTests
                 ]
 
         examples =
