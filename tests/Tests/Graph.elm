@@ -2,7 +2,7 @@ module Tests.Graph exposing (all)
 
 import Expect
 import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
-import IntDict exposing (IntDict)
+import IntDict
 import Test exposing (..)
 
 
@@ -420,6 +420,19 @@ all =
                             (Graph.checkAcyclic connectedComponents)
                 ]
 
+        forgetAcyclicTests =
+            describe "forgetAcyclic" <|
+                [ test "returns corresponding Graph" <|
+                    \() ->
+                        case Graph.checkAcyclic dressUp of
+                            Ok acyclic ->
+                                Expect.equal dressUp (Graph.forgetAcyclic acyclic)
+                                    |> Expect.onFail "graphs are not equal"
+
+                            Err _ ->
+                                Expect.fail "could not test - failed to produce AcyclicGraph"
+                ]
+
         topologicalSortTests =
             describe "topologicalSort"
                 [ test "valid topological ordering" <|
@@ -521,6 +534,7 @@ all =
                 , toStringTests
                 , graphOpsTests
                 , checkAcyclicTests
+                , forgetAcyclicTests
                 , topologicalSortTests
                 , bfsTests
                 , sccTests
