@@ -82,9 +82,14 @@ all =
                     Tree.inner 10 [ Tree.leaf 20, Tree.leaf 30, Tree.leaf 40, Tree.empty ]
             in
             describe "map"
-                [ test "does not change empty" <| \() -> Expect.true "empty remains empty" <| Tree.isEmpty <| Tree.map identity Tree.empty
-                , test "does not change structure of a tree" <| \() -> Expect.equal sample <| Tree.map identity sample
-                , test "applies function to all nodes" <| \() -> Expect.equal samplePlusOne <| Tree.map (\x -> x * 10) sample
+                [ test "does not change empty" <|
+                    \() ->
+                        Expect.equal True (Tree.isEmpty <| Tree.map identity Tree.empty)
+                            |> Expect.onFail "empty remains empty"
+                , test "does not change structure of a tree" <|
+                    \() -> Expect.equal sample <| Tree.map identity sample
+                , test "applies function to all nodes" <|
+                    \() -> Expect.equal samplePlusOne <| Tree.map (\x -> x * 10) sample
                 ]
 
         traversedTree =
