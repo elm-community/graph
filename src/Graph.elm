@@ -4,7 +4,7 @@ module Graph exposing
     , isEmpty, size, member, get, nodeIdRange
     , nodeIds, nodes, edges, fromNodesAndEdges, fromNodeLabelsAndEdgePairs
     , fold, mapContexts, mapNodes, mapEdges, reverseEdges, symmetricClosure
-    , AcyclicGraph, checkAcyclic
+    , AcyclicGraph, checkAcyclic, forgetAcyclic
     , NeighborSelector, alongOutgoingEdges, alongIncomingEdges, SimpleNodeVisitor
     , DfsNodeVisitor, onDiscovery, onFinish, dfs, dfsTree, dfsForest, guidedDfs
     , BfsNodeVisitor, ignorePath, bfs, guidedBfs
@@ -49,7 +49,7 @@ representation.
 
 # Characterization
 
-@docs AcyclicGraph, checkAcyclic
+@docs AcyclicGraph, checkAcyclic, forgetAcyclic
 
 
 # Traversals
@@ -86,11 +86,10 @@ representation.
 
 -}
 
-import Debug
-import Fifo as Fifo exposing (Fifo)
+import Fifo
 import Graph.Tree as Tree exposing (Forest, Tree)
-import IntDict as IntDict exposing (IntDict)
-import Maybe as Maybe exposing (Maybe)
+import IntDict exposing (IntDict)
+import Maybe exposing (Maybe)
 
 
 {-| The type used for identifying nodes, an integer.
@@ -646,7 +645,7 @@ The following is a specification for reverseEdges:
 
 Info: Make sure you are applying changes both to `incoming` and `outgoing`.
 The `Graph` data structure has inherent redundancy -- every edge in the incoming `IntDict` for a given node shows up again in the outgoing `IntDict` for the node on the other end of the edge and vice-versa.
-So you can use mapContexts  to modify graphs, but you have to make consistent edge changes between each pair of nodes during the mapping.
+So you can use mapContexts to modify graphs, but you have to make consistent edge changes between each pair of nodes during the mapping.
 Otherwise you'll get order-dependent results.
 This may not be the ideal way to "rewire" a graph.
 
@@ -777,6 +776,14 @@ checkAcyclic graph =
             dfs (onFinish (.node >> .id >> (::))) [] graph
     in
     checkForBackEdges reversePostOrder graph
+
+
+{-| `forgetAcyclic acyclic` unwraps `AcyclicGraph` `acyclic`
+into its corresponding regular `Graph`.
+-}
+forgetAcyclic : AcyclicGraph n e -> Graph n e
+forgetAcyclic (AcyclicGraph graph _) =
+    graph
 
 
 

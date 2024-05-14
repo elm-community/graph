@@ -2,7 +2,7 @@ module Tests.Graph exposing (all)
 
 import Expect
 import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
-import IntDict exposing (IntDict)
+import IntDict
 import Test exposing (..)
 
 
@@ -14,21 +14,6 @@ isJust m =
 
         _ ->
             False
-
-
-isOk : Result m n -> Bool
-isOk result =
-    case result of
-        Err _ ->
-            False
-
-        Ok _ ->
-            True
-
-
-isErr : Result m n -> Bool
-isErr result =
-    not (isOk result)
 
 
 expectEqualComparing : (a -> b) -> a -> a -> Expect.Expectation
@@ -174,7 +159,8 @@ expectTopologicalOrderingOf graph ordering =
                 , "    " ++ Debug.toString ordering
                 ]
     in
-    Expect.true message (isValidTopologicalOrderingOf graph ordering)
+    Expect.equal True (isValidTopologicalOrderingOf graph ordering)
+        |> Expect.onFail message
 
 
 all : Test
@@ -295,7 +281,7 @@ all =
                 , test "existing node - size" <|
                     \() ->
                         Expect.equal
-                            (dressUp |> Graph.size |> (\i -> (-) i 1))
+                            (dressUp |> Graph.size |> (\i -> i - 1))
                             (dressUp |> Graph.remove 0 |> Graph.size)
                 , test "existing node - can't get it" <|
                     \() ->
@@ -391,8 +377,7 @@ all =
             describe "Graph ops"
                 [ test "symmetricClosure is symmetric" <|
                     \() ->
-                        Expect.true
-                            "expected all incoming edges to also be outgoing and vice versa"
+                        Expect.equal True
                             (dressUp
                                 |> Graph.symmetricClosure (\_ _ e _ -> e)
                                 |> Graph.fold
@@ -401,6 +386,8 @@ all =
                                     )
                                     True
                             )
+                            |> Expect.onFail
+                                "expected all incoming edges to also be outgoing and vice versa"
                 , test "reverseEdges" <|
                     \() ->
                         Expect.equal
@@ -421,19 +408,29 @@ all =
             describe "checkAcyclicTests" <|
                 [ test "Ok for graph with no cycles" <|
                     \() ->
-                        Expect.true
-                            "Should return Ok"
-                            (isOk (Graph.checkAcyclic dressUp))
+                        Expect.ok
+                            (Graph.checkAcyclic dressUp)
                 , test "Err for cyclic graph" <|
                     \() ->
-                        Expect.true
-                            "Should return Err"
-                            (isErr (Graph.checkAcyclic dressUpWithCycle))
+                        Expect.err
+                            (Graph.checkAcyclic dressUpWithCycle)
                 , test "Err for connectedComponents" <|
                     \() ->
-                        Expect.true
-                            "Should return Err"
-                            (isErr (Graph.checkAcyclic connectedComponents))
+                        Expect.err
+                            (Graph.checkAcyclic connectedComponents)
+                ]
+
+        forgetAcyclicTests =
+            describe "forgetAcyclic" <|
+                [ test "returns corresponding Graph" <|
+                    \() ->
+                        case Graph.checkAcyclic dressUp of
+                            Ok acyclic ->
+                                Expect.equal dressUp (Graph.forgetAcyclic acyclic)
+                                    |> Expect.onFail "graphs are not equal"
+
+                            Err _ ->
+                                Expect.fail "could not test - failed to produce AcyclicGraph"
                 ]
 
         topologicalSortTests =
@@ -492,9 +489,8 @@ all =
             describe "Strongly connected components"
                 [ test "The input graph was acyclic" <|
                     \() ->
-                        Expect.true
-                            "Result should be Err"
-                            (isErr result)
+                        Expect.err
+                            result
                 , test "The expected SCCs in order" <|
                     \() ->
                         Expect.equal
@@ -513,14 +509,12 @@ all =
                             )
                 , test "dressUp is acyclic" <|
                     \() ->
-                        Expect.true
-                            "Should be Ok"
-                            (isOk (Graph.stronglyConnectedComponents dressUp))
+                        Expect.ok
+                            (Graph.stronglyConnectedComponents dressUp)
                 , test "The input graph has loops" <|
                     \() ->
-                        Expect.true
-                            "Should be Err"
-                            (isErr (Graph.stronglyConnectedComponents graphWithLoop))
+                        Expect.err
+                            (Graph.stronglyConnectedComponents graphWithLoop)
                 ]
 
         unitTests =
@@ -540,6 +534,7 @@ all =
                 , toStringTests
                 , graphOpsTests
                 , checkAcyclicTests
+                , forgetAcyclicTests
                 , topologicalSortTests
                 , bfsTests
                 , sccTests
@@ -554,13 +549,17 @@ all =
                             iWantToWearShoes
                 , test "insert" <|
                     \() ->
-                        Expect.true "Graph size wasn't 2" insertExample
+                        Expect.equal True insertExample
+                            |> Expect.onFail "Graph size wasn't 2"
                 , test "fold" <|
                     \() ->
-                        Expect.true "The graph had a loop." foldExample
+                        Expect.equal True foldExample
+                            |> Expect.onFail "The graph had a loop."
                 , test "mapContexts" <|
                     \() ->
-                        Expect.true "Mapped edge flip should've reversed edges" mapContextsExample
+                        Expect.equal True mapContextsExample
+                            |> Expect.onFail
+                                "Mapped edge flip should've reversed edges"
                 ]
     in
     describe "The Graph module"
