@@ -952,7 +952,7 @@ of nodes is handled by `visitNode` (c.f. `DfsNodeVisitor`), folding `acc` over
 the graph.
 
 When there are not any more nodes to be visited, the function will return the
-accumulated value together with the unvisited rest of `graph`.
+accumulated value together with a set of ids of the visited nodes.
 
     dfsPreOrder graph =
         -- NodeId 1 is just a wild guess here
@@ -965,45 +965,40 @@ guidedDfs :
     -> List NodeId
     -> acc
     -> Graph n e
-    -> ( acc, Graph n e )
-guidedDfs selectNeighbors visitNode startingSeeds startingAcc startingGraph =
+    -> ( acc, Set NodeId )
+guidedDfs selectNeighbors visitNode startingSeeds startingAcc graph =
     let
-        go : List NodeId -> Set NodeId -> acc -> Graph n e -> ( acc, Set NodeId, Graph n e )
-        go seeds visited acc graph =
+        go : List NodeId -> Set NodeId -> acc -> ( acc, Set NodeId )
+        go seeds visited acc =
             case seeds of
                 [] ->
                     -- We are done with this connected component, so we return acc and the rest of the graph
-                    ( acc, visited, graph )
+                    ( acc, visited )
 
                 next :: seeds1 ->
                     if Set.member next visited then
-                        go seeds1 visited acc graph
+                        go seeds1 visited acc
 
                     else
                         case get next graph of
-                            -- This can actually happen since we don't filter for already visited nodes.
-                            -- That would be an opportunity for time-memory-tradeoff.
-                            -- E.g. Passing along a set of visited nodeIds.
                             Nothing ->
-                                go seeds1 (Set.insert next visited) acc graph
+                                -- skip `next` if it is not present
+                                go seeds1 visited acc
 
                             Just ctx ->
                                 let
                                     ( accAfterDiscovery, finishNode ) =
                                         visitNode ctx acc
 
-                                    ( accBeforeFinish, visited1, graph1 ) =
-                                        go (selectNeighbors ctx) (Set.insert next visited) accAfterDiscovery graph
+                                    ( accBeforeFinish, visited1 ) =
+                                        go (selectNeighbors ctx) (Set.insert next visited) accAfterDiscovery
 
                                     accAfterFinish =
                                         finishNode accBeforeFinish
                                 in
-                                go seeds1 visited1 accAfterFinish graph1
-
-        ( finalAcc, _, finalGraph ) =
-            go startingSeeds Set.empty startingAcc startingGraph
+                                go seeds1 visited1 accAfterFinish
     in
-    ( finalAcc, finalGraph )
+    go startingSeeds Set.empty startingAcc
 
 
 {-| An off-the-shelf depth-first traversal. It will visit all components of the
