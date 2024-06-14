@@ -1,7 +1,7 @@
 module Tests.Graph.Tree exposing (all)
 
 import Expect
-import Graph.Tree as Tree exposing (Forest, Tree)
+import Graph.Tree as Tree exposing (Tree)
 import Test exposing (..)
 
 

@@ -27,7 +27,7 @@ GraphViz allows for customizing the graph's look via "Attrs."
 -}
 
 import Dict exposing (Dict)
-import Graph exposing (Edge, Graph, Node, edges, get, nodes)
+import Graph exposing (Graph, edges, nodes)
 import Json.Encode
 
 

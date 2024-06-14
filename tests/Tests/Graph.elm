@@ -629,6 +629,11 @@ all =
                         Expect.equal True mapContextsExample
                             |> Expect.onFail
                                 "Mapped edge flip should've reversed edges"
+                , test "symmetricClosureExample" <|
+                    \() ->
+                        Expect.equal True symmetricClosureExample
+                            |> Expect.onFail
+                                "Symmetric closure should only contain undirected edges"
                 ]
     in
     describe "The Graph module"

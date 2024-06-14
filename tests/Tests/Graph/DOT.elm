@@ -1,9 +1,9 @@
 module Tests.Graph.DOT exposing (all)
 
-import Dict exposing (Dict)
+import Dict
 import Expect
-import Graph exposing (Edge, Graph, Node, NodeContext, NodeId)
-import Graph.DOT as DOT exposing (..)
+import Graph exposing (Edge, Node)
+import Graph.DOT as DOT exposing (defaultStyles)
 import Test exposing (..)
 
 
@@ -50,7 +50,7 @@ all =
 }"""
 
                     actual =
-                        output Just (always Nothing) g
+                        DOT.output Just (always Nothing) g
                 in
                 \() -> Expect.equal expected actual
             , test "with edge labels" <|
@@ -92,7 +92,7 @@ all =
 }"""
 
                     actual =
-                        output Just identity g
+                        DOT.output Just identity g
                 in
                 \() -> Expect.equal expected actual
             , test "with styles" <|
@@ -135,13 +135,13 @@ all =
 
                     myStyles =
                         { defaultStyles
-                            | rankdir = LR
+                            | rankdir = DOT.LR
                             , graph = "bgcolor=red"
                             , node = "shape=box, color=blue, style=\"rounded, filled\""
                         }
 
                     actual =
-                        outputWithStyles myStyles (Just << .text) (always Nothing) g
+                        DOT.outputWithStyles myStyles (Just << .text) (always Nothing) g
                 in
                 \() -> Expect.equal expected actual
             , test "with styles with overrides" <|
@@ -207,7 +207,7 @@ all =
 }"""
 
                     actual =
-                        outputWithStylesAndAttributes myStyles nodeAttrs edgeAttrs g
+                        DOT.outputWithStylesAndAttributes myStyles nodeAttrs edgeAttrs g
                 in
                 \() -> Expect.equal expected actual
             , test "empty graph" <|
@@ -228,7 +228,7 @@ all =
 }"""
 
                     actual =
-                        output Just (always Nothing) g
+                        DOT.output Just (always Nothing) g
                 in
                 \() -> Expect.equal expected actual
             , test "graph with nodes but no edges" <|
@@ -258,7 +258,7 @@ all =
 }"""
 
                     actual =
-                        output Just (always Nothing) g
+                        DOT.output Just (always Nothing) g
                 in
                 \() -> Expect.equal expected actual
             ]

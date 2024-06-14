@@ -681,8 +681,8 @@ mapEdges f =
         (\{ node, incoming, outgoing } ->
             insert
                 { node = node
-                , outgoing = IntDict.map (\n e -> f e) outgoing
-                , incoming = IntDict.map (\n e -> f e) incoming
+                , outgoing = IntDict.map (\_ e -> f e) outgoing
+                , incoming = IntDict.map (\_ e -> f e) incoming
                 }
         )
         empty
@@ -840,7 +840,7 @@ symmetricClosure edgeMerger =
 reverseEdges : Graph n e -> Graph n e
 reverseEdges =
     let
-        updateContext nodeId ctx =
+        updateContext _ ctx =
             { ctx
                 | outgoing = ctx.incoming
                 , incoming = ctx.outgoing

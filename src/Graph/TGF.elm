@@ -14,7 +14,7 @@ You can preview your graph by inserting the generated string into
 
 -}
 
-import Graph exposing (Edge, Graph, Node, edges, nodes)
+import Graph exposing (Graph, edges, nodes)
 
 
 {-| Converts a `Graph` into a valid TGF string.
@@ -38,7 +38,7 @@ output mapNode mapEdge graph =
                     )
                 |> List.sort
     in
-    (nodes ++ [ "#" ] ++ edges)
+    (nodes ++ "#" :: edges)
         -- trimming is questionable; little info about the format exists.
         -- yEd imports it fine though.
         |> List.map String.trim
